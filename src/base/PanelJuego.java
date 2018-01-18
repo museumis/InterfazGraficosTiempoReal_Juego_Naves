@@ -1,9 +1,12 @@
-package JPanelBlanco;
+package base;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Point;
+import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
@@ -45,17 +48,29 @@ public class PanelJuego extends JPanel implements Runnable {
 	private float tiempoJuego;
 	// Propiedades
 	private final int TAMANIO_ASTEROIDE = 40;
-	//Acciones
-	private boolean disparoActivo= true;
+	private Font fuente = new Font("TimesRoman", Font.PLAIN, 80);
+	private Color colorInicio;
+	// Acciones
+	private boolean disparoActivo = true;
+	// Pantalla inicio
+	int pantalla = 0;
 
 	/*
 	 * Constructor
 	 */
 	public PanelJuego() {
-		// Iniciar listado de sprites
-		asteroides = new ArrayList<>();
 		// Dibujar fondo
 		cargarFondo();
+		// Anadir listenes
+		listened();
+		new Thread(this).start();
+
+	}// Fin del constructor
+
+
+	public void iniciarPartida() {
+		// Iniciar listado de sprites
+		asteroides = new ArrayList<>();
 		// Iniciar asteroides
 		for (int i = 0; i < NUMERO_ASTEROIDES; i++) {
 			asteroides.add(new Sprite(TAMANIO_ASTEROIDE, TAMANIO_ASTEROIDE, 10, 10, aleatorio(-15, 31),
@@ -65,11 +80,41 @@ public class PanelJuego extends JPanel implements Runnable {
 		nave = new Sprite(45, 40, 300, 300, 0, 0, new Color(255, 200, 200), RUTA_IMG_NAVE);
 		// Iniciar Cronometro
 		tiempoIncial = System.nanoTime();
-		// Anadir listenes
-		listened();
-		// Iniciar hilo
-		new Thread(this).start();
-	}// Fin del constructor
+
+	}
+
+	/**
+	 * Metodo sobreescrito para pintar el componente, frames por segundo
+	 */
+	@Override
+	protected void paintComponent(Graphics g) {
+
+		switch (pantalla) {
+		case 0: {
+			// Escribir en grafico
+			g.setColor(Color.BLACK);
+			g.setFont(fuente);
+			g.drawString("NAVITOM", getWidth() / 3, getHeight() / 2);
+			g.setColor(colorInicio);
+			g.drawLine((getHeight() / 2) + 120, (getHeight()/2)+20, (getWidth() / 2) + 120, (getHeight()/2)+20);
+			break;
+		}
+		case 1: {
+			ocultarRaton();
+			actualizarFondo(g);
+			pintarAsteroide(g);
+			pintarNave(g);
+			actualizarTiempo();
+			pintarTiempo(g);
+			if (bala != null) {
+				bala.pintarSprite(g);
+			}
+			break;
+		}
+
+		}
+
+	}
 
 	/**
 	 * Run del panel
@@ -78,52 +123,53 @@ public class PanelJuego extends JPanel implements Runnable {
 	public void run() {
 		while (true) {
 			this.repaint();
-			// Movimiento bala
-			if (bala != null) {
-				if (bala.colisionConBordePantalla(getHeight())) {
-					bala = null;
-					disparoActivo=true;
-				} else {
-					bala.moverSprite(getWidth(), getHeight());
-				}
 
+			switch (pantalla) {
+			case 0: {
+				// color de Inicio
+				colorInicio = new Color(aleatorio(0,255), aleatorio(0,255),aleatorio(0,255));
+				break;
 			}
 
-			// Asteroides
-			for (int i = 0; i < asteroides.size(); i++) {
-				// Colision por Bala
-				if (bala != null && bala.colisionaCon(asteroides.get(i))) {
-					asteroides.remove(i);
-					bala = null;
-					disparoActivo=true;
-				} else {
-					// Movimiento del asteroide
-					asteroides.get(i).moverSprite(getWidth(), getHeight());
+			case 1: {
+				// Movimiento bala
+				if (bala != null) {
+					if (bala.colisionConBordePantalla(getHeight())) {
+						bala = null;
+						disparoActivo = true;
+					} else {
+						bala.moverSprite(getWidth(), getHeight());
+					}
+
 				}
 
+				// Asteroides
+				for (int i = 0; i < asteroides.size(); i++) {
+					// Colision por Bala
+					if (bala != null && bala.colisionaCon(asteroides.get(i))) {
+						asteroides.remove(i);
+						bala = null;
+						disparoActivo = true;
+					} else {
+						// Movimiento del asteroide
+						asteroides.get(i).moverSprite(getWidth(), getHeight());
+					}
+
+				}
+				break;
 			}
+
+			default:
+				break;
+			}
+
 			try {
 				Thread.sleep(25);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
-	}
 
-	/**
-	 * Metodo sobreescrito para pintar el componente, frames por segundo
-	 */
-	@Override
-	protected void paintComponent(Graphics g) {
-		actualizarFondo(g);
-		pintarAsteroide(g);
-		pintarNave(g);
-		actualizarTiempo();
-		pintarTiempo(g);
-
-		if (bala != null) {
-			bala.pintarSprite(g);
-		}
 	}
 
 	/**
@@ -189,26 +235,6 @@ public class PanelJuego extends JPanel implements Runnable {
 		tiempoJuego = tiempoActual - tiempoIncial;
 	}
 
-	/**
-	 * Metodo para comprobar colision
-	 * 
-	 * @param sprite
-	 *            que queremos comprobar
-	 * @param posicion
-	 *            que ocupa en la lista
-	 */
-	public void comprobarColision(Sprite sprite, int posicion) {
-		for (int i = 0; i < asteroides.size(); i++) {
-			for (int j = i + 1; j < asteroides.size(); j++) {
-				if (asteroides.get(i).colisionaCon(asteroides.get(j))) {
-					asteroides.remove(j);
-					asteroides.remove(i);
-				}
-
-			}
-		}
-
-	}
 
 	/**
 	 * Obtiene un aleatorio
@@ -232,11 +258,22 @@ public class PanelJuego extends JPanel implements Runnable {
 		this.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e)&&disparoActivo) {
-					bala = new Sprite(16, 40, nave.getPosX() + ((nave.getAncho() / 2) - 4),
-							nave.getPosY() + (nave.getAlto() / 2), 0, -10, Color.green, "");
-					disparoActivo=false;
+				switch (pantalla) {
+				case 1: {
+					if (SwingUtilities.isLeftMouseButton(e) && disparoActivo) {
+						bala = new Sprite(16, 40, nave.getPosX() + ((nave.getAncho() / 2) - 4),
+								nave.getPosY() + (nave.getAlto() / 2), 0, -10, Color.green, "");
+						disparoActivo = false;
+					}
+					break;
 				}
+				case 0: {
+					pantalla++;
+					iniciarPartida();
+					break;
+				}
+				}
+
 			}
 		});
 
@@ -244,14 +281,33 @@ public class PanelJuego extends JPanel implements Runnable {
 		this.addMouseMotionListener(new MouseMotionListener() {
 			@Override
 			public void mouseMoved(MouseEvent e) {
-				nave.setPosX(e.getX() - (nave.getAncho() / 2));
-				nave.setPosY(e.getY() - (nave.getAlto() / 2));
+				switch (pantalla) {
+				case 0: {
+					break;
+				}
+				case 1: {
+					nave.setPosX(e.getX() - (nave.getAncho() / 2));
+					nave.setPosY(e.getY() - (nave.getAlto() / 2));
+					break;
+				}
+
+				}
+
 			}
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
-				nave.setPosX(e.getX() - (nave.getAncho() / 2));
-				nave.setPosY(e.getY() - (nave.getAlto() / 2));
+				switch (pantalla) {
+				case 0: {
+					break;
+				}
+				case 1: {
+					nave.setPosX(e.getX() - (nave.getAncho() / 2));
+					nave.setPosY(e.getY() - (nave.getAlto() / 2));
+					break;
+				}
+
+				}
 
 			}
 		});
@@ -261,10 +317,18 @@ public class PanelJuego extends JPanel implements Runnable {
 			@Override
 			public void componentResized(ComponentEvent e) {
 				imgFondoReescalada = imgFondo.getScaledInstance(getWidth(), getHeight(), BufferedImage.SCALE_SMOOTH);
-
 			}
 		});
 
+	}
+
+	public void ocultarRaton() {
+		// Transparent 16 x 16 pixel cursor image.
+		BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+		// Create a new blank cursor.
+		Cursor cursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), "blank cursor");
+		// Set the blank cursor to the JFrame.
+		this.getRootPane().setCursor(cursor);
 	}
 
 }

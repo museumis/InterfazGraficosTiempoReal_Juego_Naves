@@ -1,4 +1,4 @@
-package JPanelBlanco;
+package base;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -60,21 +60,19 @@ public class Sprite {
 	 */
 	public void cargarSprite() {
 		// Preparativos
-		fichero = new File(this.ruta);
 		imagen = new BufferedImage(this.ancho, this.alto, BufferedImage.TYPE_INT_ARGB);
+		grafico = imagen.getGraphics();
 		try {
 			// Reescalado
-			imgAux = ImageIO.read(fichero);
-			grafico = imagen.getGraphics();
-			imgEscalada = imgAux.getScaledInstance(this.ancho, this.alto, BufferedImage.SCALE_SMOOTH);
+			imgAux = ImageIO.read(new File(this.ruta));
+			imgAux = imgAux.getScaledInstance(this.ancho, this.alto, BufferedImage.SCALE_SMOOTH);		
 			// Dibujar
-			grafico.drawImage(imgEscalada, 0, 0, null);
+			grafico.drawImage(imgAux, 0, 0, null);
+			//Si falla
 		} catch (IOException e) {
-			grafico = imagen.getGraphics();
 			grafico.setColor(this.color);
 			grafico.fillRect(0, 0, this.ancho, this.alto);
 			grafico.dispose();
-
 			// System.out.println("Imagen del Sprite no cargada.");
 		}
 	}

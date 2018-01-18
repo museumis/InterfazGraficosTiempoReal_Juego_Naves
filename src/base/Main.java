@@ -1,4 +1,4 @@
-package JPanelBlanco;
+package base;
 
 import java.awt.EventQueue;
 
