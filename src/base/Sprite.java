@@ -11,9 +11,8 @@ import javax.imageio.ImageIO;
 public class Sprite {
 
 	// Elementos
-	private File fichero;
 	private String ruta;
-	private Image imagen, imgAux, imgEscalada;
+	private Image imagen, imgAux;
 	private Graphics grafico;
 	// Propiedades
 	private Color color;

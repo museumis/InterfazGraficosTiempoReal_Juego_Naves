@@ -27,7 +27,13 @@ public interface Pantalla {
 	 * Acciones que llevara acabo el raton cuando se pulse
 	 */
 	public void pulsarRaton(MouseEvent e);
-	
+	/**
+	 * Acciones que llevara acabo el raton cuando se presiona el raton
+	 */
+	public void mantenerPulsadoRaton(MouseEvent e);
+	/*
+	 * Accion al redimensionar
+	 */
 	public void redimensionarPantalla(ComponentEvent e);
 	
 	
