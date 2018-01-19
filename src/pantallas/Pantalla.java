@@ -34,7 +34,8 @@ public interface Pantalla {
 	/*
 	 * Accion al redimensionar
 	 */
-	public void redimensionarPantalla(ComponentEvent e);
+	public void redimensionarPantalla();
+	
 	
 	
 }

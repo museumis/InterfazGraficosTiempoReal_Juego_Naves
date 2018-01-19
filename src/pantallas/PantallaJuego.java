@@ -7,7 +7,6 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -30,7 +29,7 @@ public class PantallaJuego implements Pantalla {
 	private ArrayList<Sprite> asteroides;
 	private Sprite nave;
 	private Sprite bala;
-	private final int NUMERO_ASTEROIDES = 6;
+	private final int NUMERO_ASTEROIDES = 1;
 	private final String RUTA_IMG_ASTEROIDE = "src//img//golden_star.gif";
 	private final String RUTA_IMG_NAVE = "src//img//nave.png";
 	private final String RUTA_IMG_FONDO = "src//img//heavy.jpg";
@@ -39,7 +38,7 @@ public class PantallaJuego implements Pantalla {
 	// Propiedades
 	private final int TAMANIO_ASTEROIDE = 40;
 	// Elementos
-	Image imgFondo = null, imgFondoReescalada = null;
+	Image imgFondo = null;
 	private File fondo;
 
 	// Cronometro
@@ -53,6 +52,7 @@ public class PantallaJuego implements Pantalla {
 	public PantallaJuego(PanelJuego panelJuego) {
 		this.panelJuego = panelJuego;
 		inicializarPantalla();
+		redimensionarPantalla();
 	}
 
 	@Override
@@ -83,35 +83,63 @@ public class PantallaJuego implements Pantalla {
 		if (bala != null) {
 			bala.pintarSprite(g);
 		}
+		if(quedanAsteroides()) {
+			panelJuego.setPantalla(new PantallaVictoria(panelJuego,tiempoJuego));
+		}
+		//Colision de la nave
+		for (int j = 0; j < asteroides.size(); j++) {
+				if(nave.colisionaCon(asteroides.get(j))) {
+			panelJuego.setPantalla(new PantallaGameOver(panelJuego,tiempoJuego));
+
+		}
+		}
+	
+		
 
 	}
 
 	@Override
 	public void ejecutarFrame() {
+		try {
+			// Movimiento bala
+			if (bala != null) {
+				if (bala.colisionConBordePantalla(panelJuego.getHeight())) {
+					bala = null;
+					disparoActivo = true;
+				} else {
+					bala.moverSprite(panelJuego.getWidth(), panelJuego.getHeight());
+				}
 
-		// Movimiento bala
-		if (bala != null) {
-			if (bala.colisionConBordePantalla(panelJuego.getHeight())) {
-				bala = null;
-				disparoActivo = true;
-			} else {
-				bala.moverSprite(panelJuego.getWidth(), panelJuego.getHeight());
 			}
 
+			// Asteroides
+			for (int i = 0; i < asteroides.size(); i++) {
+				// Colision por Bala
+				if (bala != null && bala.colisionaCon(asteroides.get(i))) {
+					asteroides.remove(i);
+					bala = null;
+					disparoActivo = true;
+				} else {
+					// Movimiento del asteroide
+					asteroides.get(i).moverSprite(panelJuego.getWidth(), panelJuego.getHeight());
+				}
+
+			
+				
+			}
+		
+
+			Thread.sleep(25);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
-
-		// Asteroides
-		for (int i = 0; i < asteroides.size(); i++) {
-			// Colision por Bala
-			if (bala != null && bala.colisionaCon(asteroides.get(i))) {
-				asteroides.remove(i);
-				bala = null;
-				disparoActivo = true;
-			} else {
-				// Movimiento del asteroide
-				asteroides.get(i).moverSprite(panelJuego.getWidth(), panelJuego.getHeight());
-			}
-
+	}
+	
+	public boolean quedanAsteroides() {
+		if(asteroides.isEmpty()) {
+			return true;
+		}else {
+			return false;
 		}
 	}
 
@@ -134,7 +162,7 @@ public class PantallaJuego implements Pantalla {
 	 * @param grafico
 	 */
 	public void actualizarFondo(Graphics g) {
-		g.drawImage(imgFondoReescalada, 0, 0, null);
+		g.drawImage(imgFondo, 0, 0, null);
 	}
 
 	/**
@@ -160,9 +188,11 @@ public class PantallaJuego implements Pantalla {
 			asteroides.get(i).pintarSprite(g);
 		}
 	}
+
 	public void pintarNave(Graphics g) {
 		nave.pintarSprite(g);
 	}
+
 	public void pintarBala(Graphics g) {
 		bala.pintarSprite(g);
 
@@ -175,6 +205,7 @@ public class PantallaJuego implements Pantalla {
 		tiempoActual = System.nanoTime();
 		tiempoJuego = tiempoActual - tiempoIncial;
 	}
+
 	public void ocultarRaton() {
 		// Transparent 16 x 16 pixel cursor image.
 		BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
@@ -183,6 +214,15 @@ public class PantallaJuego implements Pantalla {
 		// Set the blank cursor to the JFrame.
 		this.panelJuego.getRootPane().setCursor(cursor);
 	}
+	public void mostrarRaton() {
+		// Transparent 16 x 16 pixel cursor image.
+		BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+		// Create a new blank cursor.
+		Cursor cursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), "blank cursor");
+		// Set the blank cursor to the JFrame.
+		this.panelJuego.getRootPane().setCursor(cursor);
+	}
+
 	@Override
 	public void moverRaton(MouseEvent e) {
 		nave.setPosX(e.getX() - (nave.getAncho() / 2));
@@ -205,8 +245,8 @@ public class PantallaJuego implements Pantalla {
 	}
 
 	@Override
-	public void redimensionarPantalla(ComponentEvent e) {
-		imgFondoReescalada = imgFondo.getScaledInstance(panelJuego.getWidth(), panelJuego.getHeight(),
+	public void redimensionarPantalla() {
+		imgFondo = imgFondo.getScaledInstance(panelJuego.getWidth(), panelJuego.getHeight(),
 				BufferedImage.SCALE_SMOOTH);
 	}
 
@@ -222,5 +262,7 @@ public class PantallaJuego implements Pantalla {
 		int aleatorio = r.nextInt(cantidad) + minimo;
 		return aleatorio;
 	}
+	
+	
 
 }

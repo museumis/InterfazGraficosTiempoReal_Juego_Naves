@@ -1,16 +1,12 @@
 package base;
 
-import java.awt.Cursor;
+import java.awt.Font;
 import java.awt.Graphics;
-import java.awt.Point;
-import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
 
 import javax.swing.JPanel;
 
@@ -21,15 +17,19 @@ public class PanelJuego extends JPanel implements Runnable {
 
 	private static final long serialVersionUID = 1L;
 	// Pantalla inicio
-	ArrayList<Pantalla> pantallas;
+	Pantalla pantallaActual;
+	private Font fuente;
+
 	/*
 	 * Constructor
 	 */
 	public PanelJuego() {
-		//Iniciar pantalla de bienvenida
-		pantallas= new ArrayList<>();
-		pantallas.add(new PantallaBienvenida(this));
+		// Iniciar pantalla de bienvenida
+		pantallaActual = new PantallaBienvenida(this);
+		fuente = new Font("TimesRoman", Font.PLAIN, 80);
+		listened();
 		new Thread(this).start();
+
 	}// Fin del constructor
 
 	/**
@@ -37,7 +37,7 @@ public class PanelJuego extends JPanel implements Runnable {
 	 */
 	@Override
 	protected void paintComponent(Graphics g) {
-		pantallas.get(0).pintarPantalla(g);
+		pantallaActual.pintarPantalla(g);
 	}
 
 	/**
@@ -46,17 +46,10 @@ public class PanelJuego extends JPanel implements Runnable {
 	@Override
 	public void run() {
 		while (true) {
-			//Repintar
+			// Repintar
 			this.repaint();
-
-			pantallas.get(0).ejecutarFrame();
-			//interfaz. efecutarFrame
-			//Dormir
-			try {
-				Thread.sleep(25);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			pantallaActual.ejecutarFrame();
+		
 		}
 
 	}
@@ -69,6 +62,7 @@ public class PanelJuego extends JPanel implements Runnable {
 		this.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mousePressed(MouseEvent e) {
+				pantallaActual.pulsarRaton(e);
 			}
 		});
 
@@ -76,10 +70,14 @@ public class PanelJuego extends JPanel implements Runnable {
 		this.addMouseMotionListener(new MouseMotionListener() {
 			@Override
 			public void mouseMoved(MouseEvent e) {
+				pantallaActual.moverRaton(e);
+
 			}
 
 			@Override
 			public void mouseDragged(MouseEvent e) {
+				pantallaActual.moverRaton(e);
+
 			}
 		});
 
@@ -87,9 +85,27 @@ public class PanelJuego extends JPanel implements Runnable {
 		this.addComponentListener(new ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
+				pantallaActual.redimensionarPantalla();
 			}
 		});
 	}
+
+	/**
+	 * Metodo para cambia la pantall
+	 * @param pantallaActual
+	 */
+	public void setPantalla(Pantalla pantallaActual) {
+		this.pantallaActual = pantallaActual;
+	}
+
+	public Font getFuente() {
+		return fuente;
+	}
+
+	public void setFuente(Font fuente) {
+		this.fuente = fuente;
+	}
+	
 
 
 
